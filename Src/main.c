@@ -118,9 +118,9 @@ volatile uint32_t main_loop_counter;
 //------------------------------------------------------------------------
 // Local variables
 //------------------------------------------------------------------------
-uint32_t loop_time = 0;
-uint32_t tick_last = 0;
-#ifdef PID_CONTROL
+uint32_t loop_time = 0; //Vam added to measure delays in loop
+uint32_t tick_last = 0; 
+#ifdef PID_CONTROL   //Vam added for closed loop control of motors using HAL sensors
 
 
 PID_DATA PIDL ={KP,KI,PIDDZ,PIDLIM,0,0,0,0,0}; //{KP,KI,PIDDZ,PIDLIM, 0,0,0};  //pid sturcture for left wheel
@@ -462,11 +462,11 @@ int main(void) {
       filtLowPass32(speed1RateFixdt >> 4, FILTER, &speed1Fixdt);
       filtLowPass32(speed2RateFixdt >> 4, FILTER, &speed2Fixdt);
 		
-      //speed1 = (int16_t)(speed1Fixdt >> 16);  // convert fixed-point to integer
-      //speed2 = (int16_t)(speed2Fixdt >> 16);  // convert fixed-point to integer
+      speed1 = (int16_t)(speed1Fixdt >> 16);  // convert fixed-point to integer
+      speed2 = (int16_t)(speed2Fixdt >> 16);  // convert fixed-point to integer
 		// uncomment for step input testing 
-			speed1 = ( main_loop_counter > 4)*500; 
-			speed2 = ( main_loop_counter >  4)*500; 
+			//speed1 = ( main_loop_counter > 4)*500; 
+			//speed2 = ( main_loop_counter >  4)*500; 
 		// end step input testing	
 			
 		PIDL.input = speed1;//-input1[inIdx].cmd; scaled to +_1000 counts input
@@ -486,8 +486,15 @@ int main(void) {
 	  //print_PID(PIDL);  
 		PID(&PIDR);// right pid control
 		//print_PID(PIDR);
+		//limit pwm to 100 during first five seconds to keep turn on transients safe
+		if(main_loop_counter < 1000){
+		cmdL = CLAMP(PIDL.output,-100,100);
+		cmdR = CLAMP(PIDR.output,-100,100);
+		}
+    else {	
 		cmdL = CLAMP(PIDL.output,-1000,1000);
-		cmdR = CLAMP(PIDR.output,-1000,1000);		
+		cmdR = CLAMP(PIDR.output,-1000,1000);	
+		}	
 		pwml = cmdL;
 		pwmr = cmdR;
 		//if (main_loop_counter >= 2) pwml = pwmr=500;//speed test
@@ -503,28 +510,43 @@ int main(void) {
 
     // ####### DEBUG SERIAL OUT #######
     #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
-      if (main_loop_counter % 1 == 0) {    // Send data periodically every 125 ms
-        //printf("in1:%i in2:%i cmdL:%i cmdR:%i BatADC:%i BatV:%i TempADC:%i Temp:%i\r\n",
-				printf("s1 %i s2 %i PosL %i PosR %i\r\n",
-          //input1[inIdx].raw,        // 1: INPUT1
-          //input2[inIdx].raw,        // 2: INPUT2
-				  speed1,
-				  speed2,
+		   { 
+		loop_time= HAL_GetTick()-tick_last;
+				tick_last = HAL_GetTick();
+//      if (main_loop_counter % 25 == 0) {    // Send data periodically every 125 ms
+//        printf("in1:%i in2:%i cmdL:%i cmdR:%i \r\n",		
+//          input1[inIdx].raw,        // 1: INPUT1
+//          input2[inIdx].raw,        // 2: INPUT2
+//          cmdL,                     // 3: output command: [-1000, 1000]
+//				  cmdR );                   // 4: output command: [-1000, 1000]
+//				}
+//				if (main_loop_counter % 260 == 0) {    // Send data periodically every 1.3 ms	
+//				printf("BADC:%i BV:%i TADC:%i T:%i\r\n",
+//          adc_buffer.batt1,         // 5: for battery voltage calibration
+//          batVoltage * BAT_CALIB_REAL_VOLTAGE / BAT_CALIB_ADC, // 6: for verifying battery voltage calibration
+//          board_temp_adcFilt,       // 7: for board temperature calibration
+//          board_temp_deg_c);        // 8: for verifying board temperature calibration
+//				}
+				 if (main_loop_counter % 1 == 0) {    //  Send PID data periodically every 5 ms
+        
+				printf("IL %i FL %i IR %i FR %i\r\n",
+				  PIDL.input,
+					PIDL.feedback,
+				  PIDR.input,
+					PIDR.feedback
+					 );}
+					
           //cmdL,                     // 3: output command: [-1000, 1000]
           //cmdR,                     // 4: output command: [-1000, 1000]           
-          //adc_buffer.batt1,         // 5: for battery voltage calibration
-          //batVoltage * BAT_CALIB_REAL_VOLTAGE / BAT_CALIB_ADC, // 6: for verifying battery voltage calibration
-          //board_temp_adcFilt,       // 7: for board temperature calibration
-          //board_temp_deg_c);        // 8: for verifying board temperature calibration
-					//motAngleLeft  ,
-					//motAngleRight,
+          //motAngleRight,
 				  //MotorPosL,
           //MotorPosR);
-				  PIDL.feedback,
-				  PIDR.feedback);
+					
+				  
+				  
+					
 				 
-				loop_time= HAL_GetTick()-tick_last;
-				tick_last = HAL_GetTick();
+				
 				//			printf("loopms %i 48 total xxxxxxxxxxxxxxxxxxxxxxx\r\n",loop_time);
 //				printf("loop_time :%i motorAngleR:%i MotorPosR:%i pwmL:%i motorAngleL:%i MotorPosL:%i \r\n",
 //          //rtY_Right.n_mot,
@@ -626,8 +648,8 @@ int main(void) {
     main_loop_counter++;
   }
 }
-	}
-
+	
+}
 
 // ===========================================================
 /** System Clock Configuration
