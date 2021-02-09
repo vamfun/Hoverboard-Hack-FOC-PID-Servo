@@ -1,3 +1,8 @@
+This hoverboard firmware is based upon the FOC firmware.   It has GPIO modifications to match a motherboard that was taken from a Hover 1 H1 hoverboard.  The GPIO changes are shown here: https://github.com/NiklasFauth/hoverboard-firmware-hack/issues/162#issuecomment-757374880
+My reository  uses a  modified FOC ADC Variant that includes a closed loop PID controller that uses HALL effect sensor  motor position to as feedback.  The inputs are from ADC1 and ADC2.  PID is parameterized to include  KP,KD,KI, deadzone and KI integerator limit.  Since the main loop includes an input rate limit and filter I decided to regulate the main loop be periodic at exactly the main_loop_delay.   This is done with a main loop timer function that regulates the main period based upon the bldc interrupt based buzzerTimer.   If less than 32 characters are debug printed, then the print frequency can be every 5m.  I have also replaced steering/speed variables with speed1 /speed3 variables.    THis software will be changing as the flying fire hose project evolves.
+
+
+
 # hoverboard-firmware-hack-FOC
 [![Build Status](https://travis-ci.com/EmanuelFeru/hoverboard-firmware-hack-FOC.svg?branch=master)](https://travis-ci.com/EmanuelFeru/hoverboard-firmware-hack-FOC)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
