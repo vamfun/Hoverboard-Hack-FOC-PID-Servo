@@ -35,6 +35,7 @@ and PID_CONTROL here:
 	#endif
 
 Good luck...
+The motors are very responsive....Motor response to a full rotation step input to the PID controller takes less than an 1/8 second reach a full 360 deg mechanical rotation.  
 
 
 
