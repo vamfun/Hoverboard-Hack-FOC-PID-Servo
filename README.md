@@ -1,5 +1,40 @@
-This hoverboard firmware is based upon the FOC firmware.   It has GPIO modifications to match a motherboard that was taken from a Hover 1 H1 hoverboard.  The GPIO changes are shown here: https://github.com/NiklasFauth/hoverboard-firmware-hack/issues/162#issuecomment-757374880
-My reository  uses a  modified FOC ADC Variant that includes a closed loop PID controller that uses HALL effect sensor  motor position to as feedback.  The inputs are from ADC1 and ADC2.  PID is parameterized to include  KP,KD,KI, deadzone and KI integerator limit.  Since the main loop includes an input rate limit and filter I decided to regulate the main loop be periodic at exactly the main_loop_delay.   This is done with a main loop timer function that regulates the main period based upon the bldc interrupt based buzzerTimer.   If less than 32 characters are debug printed, then the print frequency can be every 5m.  I have also replaced steering/speed variables with speed1 /speed3 variables.    THis software will be changing as the flying fire hose project evolves.
+This hoverboard firmware is based upon the FOC firmware.   It has GPIO modifications to match a motherboard that was taken from a Hover 1 H1 hoverboard.  The GPIO changes are shown here: https://github.com/NiklasFauth/hoverboard-firmware-hack/issues/162#issuecomment-757374880.   So you need to restore the GPIO changes to your board before running.   
+My repository uses a modified FOC ADC Variant that includes a closed loop PID controller that uses HALL effect sensor motor position to as feedback.  The inputs are from ADC1 and ADC2.  PID is parameterized to include  KP,KD,KI, deadzone and KI integerator limit.  Since the position is based upon HALL sensor feedback, the resolution is 4 degs mechanical position.   A separate encoder is required for more precision. The default software only uses KP = 2... all other PID gains are 0.  All input filters and limiters are effectively removed by setting their paramaters at extreme limits.
+
+Since the main loop includes an input rate limit and filter I decided to regulate the main loop to be periodic at exactly the DELAY_IN_MAIN_LOOP.   This is done with a main loop timer function that regulates the main period based upon the bldc in terrupt based buzzerTimer.   If less than 32 characters are debug printed, then the print frequency can be every 5m.  I have also replaced steering/speed variables with speed1 /speed3 variables.   
+ 
+ The  PID inputs and motor feedbacks are scaled to 2000 counts per rotation or +_1000 cnts.  ie 1000 counts moves the motor 180 mechanical degrees.   Varying the ADC from 0 to 4096 will cause one rotation.  If using type2 ADC, starting the program with ADC at mid position will create a zero startup transient.   If there is an uncenterd ADC, the motors will move to the commanded position slowly at 100 pwm speed for during first 5 seconds to slow fade the PID loop action. After 5 seconds the pwm command limit is restored to 1000.   
+Notice that these #Defines are required to run the PID.
+In config.h  uncomment
+#Define VARIANT_ADC   
+and PID_CONTROL here:
+// ############################# PID CONTROL SETTINGS ################################
+  #define PID_CONTROL   //uncomment to use PID control
+	
+	#ifdef PID_CONTROL 
+	  
+	 #define KP  2.
+	 #define KI  0. 
+	 #define PIDDZ 0
+	 #define PIDLIM  360
+	 typedef struct 
+     {
+		 float Kp;
+		 float Ki;
+		 int dz ;
+		 int limit;
+		 int error;
+		 int cum_error;
+		 int input;
+		 int feedback;
+		 int output;
+		 
+		 }PID_DATA ;
+		 void PID(PID_DATA *p);
+		 void print_PID(PID_DATA p);
+	#endif
+
+Good luck...
 
 
 
