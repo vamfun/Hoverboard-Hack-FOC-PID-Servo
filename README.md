@@ -35,9 +35,7 @@ and PID_CONTROL here:
 	#endif
 
 Good luck...
-The motors are very responsive....Motor response to a full rotation step input to the PID controller takes less than an 1/8 second reach a full 360 deg mechanical rotation.  
-
-
+The motors are very responsive....Motor response to a full rotation step input to the PID controller takes less than an 1/8 second reach a full 360 deg mechanical rotation.    See plot: https://github.com/vamfun/Hoverboard-Hack-FOC-PID-Servo/blob/main/360%20degree%20step%20response%20plot.jpeg
 
 # hoverboard-firmware-hack-FOC
 [![Build Status](https://travis-ci.com/EmanuelFeru/hoverboard-firmware-hack-FOC.svg?branch=master)](https://travis-ci.com/EmanuelFeru/hoverboard-firmware-hack-FOC)
