@@ -120,6 +120,7 @@ volatile uint32_t main_loop_counter;
 //------------------------------------------------------------------------
 uint32_t loop_time = 0; //Vam added to measure delays in loop
 uint32_t tick_last = 0; 
+int run = 1 ;  //vam variable for step testing
 #ifdef PID_CONTROL   //Vam added for closed loop control of motors using HAL sensors
 
 
@@ -462,11 +463,21 @@ int main(void) {
       filtLowPass32(speed1RateFixdt >> 4, FILTER, &speed1Fixdt);
       filtLowPass32(speed2RateFixdt >> 4, FILTER, &speed2Fixdt);
 		
-      speed1 = (int16_t)(speed1Fixdt >> 16);  // convert fixed-point to integer
-      speed2 = (int16_t)(speed2Fixdt >> 16);  // convert fixed-point to integer
+//      speed1 = (int16_t)(speed1Fixdt >> 16);  // convert fixed-point to integer
+//      speed2 = (int16_t)(speed2Fixdt >> 16);  // convert fixed-point to integer
 		// uncomment for step input testing 
-			//speed1 = ( main_loop_counter > 4)*500; 
-			//speed2 = ( main_loop_counter >  4)*500; 
+			
+			if ( run < 7 ) {	int cmd_test = run*2000*9/360;		
+		  if( main_loop_counter >= 50*run && main_loop_counter <(50*run+25))
+			{speed1 = cmd_test; }
+			else if ( main_loop_counter <=  (50*run + 50))
+			{speed1 = 0; }
+			else if(main_loop_counter >(50*run + 50)){ 
+						run ++;
+			}
+					else {speed1 =0; }
+				
+			}
 		// end step input testing	
 			
 		PIDL.input = speed1;//-input1[inIdx].cmd; scaled to +_1000 counts input
@@ -487,11 +498,12 @@ int main(void) {
 		PID(&PIDR);// right pid control
 		//print_PID(PIDR);
 		//limit pwm to 100 during first five seconds to keep turn on transients safe
-		if(main_loop_counter < 1000){
-		cmdL = CLAMP(PIDL.output,-100,100);
-		cmdR = CLAMP(PIDR.output,-100,100);
-		}
-    else {	
+//		if(main_loop_counter < 1000){
+//		cmdL = CLAMP(PIDL.output,-100,100);
+//		cmdR = CLAMP(PIDR.output,-100,100);
+//		}
+//    else 	
+		{	
 		cmdL = CLAMP(PIDL.output,-1000,1000);
 		cmdR = CLAMP(PIDR.output,-1000,1000);	
 		}	
@@ -529,11 +541,12 @@ int main(void) {
 //				}
 				 if (main_loop_counter % 1 == 0) {    //  Send PID data periodically every 5 ms
         
-				printf("IL %i FL %i IR %i FR %i\r\n",
+				printf(" IN %i FL %i wL %i\r\n",
+					//loop_time,
 				  PIDL.input,
 					PIDL.feedback,
-				  PIDR.input,
-					PIDR.feedback
+				  //PIDR.input,
+					rtY_Left.n_mot
 					 );}
 					
           //cmdL,                     // 3: output command: [-1000, 1000]
